@@ -39,18 +39,15 @@ st.write("Escribe cómo te has sentido en estos últimos días o describe tu dí
 
 text = st.text_area(
     "Escribe tu respuesta aquí:",
-    placeholder="Ejemplo: Hoy estoy deprimido, no estoy contento, necesito ayuda...",
+    placeholder="Ejemplo: Hoy me siento muy contento, alegre y satisfecho con mis logros...",
     height=120,
 )
 
 
-# Función para traducir de forma ultra segura
 def traducir_texto(texto_original):
     try:
-        # Intento 1: Uso de deep-translator
         return GoogleTranslator(source="auto", target="en").translate(texto_original)
     except Exception:
-        # Intento 2: Si la API de traducción se bloquea, devolvemos el texto limpio
         return texto_original
 
 
@@ -67,8 +64,24 @@ if st.button("🚀 Analizar Estado Emocional", type="primary"):
             polarity = round(blob.sentiment.polarity, 2)
             subjectivity = round(blob.sentiment.subjectivity, 2)
 
-            # Ajuste manual por palabras clave en español en caso de que falle la traducción
-            palabras_tristes = [
+            # 3. Diccionarios de palabras clave en español (Respaldo directo)
+            palabras_positivas = [
+                "feliz",
+                "contento",
+                "alegre",
+                "bien",
+                "excelente",
+                "genial",
+                "emocionado",
+                "satisfecho",
+                "tranquilo",
+                "paz",
+                "optimista",
+                "afortunado",
+                "motivado",
+            ]
+
+            palabras_negativas = [
                 "deprimido",
                 "deprimida",
                 "triste",
@@ -78,13 +91,22 @@ if st.button("🚀 Analizar Estado Emocional", type="primary"):
                 "solo",
                 "sola",
                 "horrible",
+                "ansioso",
+                "preocupado",
+                "agotado",
+                "desesperado",
             ]
-            contiene_palabras_tristes = any(
-                p in text.lower() for p in palabras_tristes
-            )
 
-            # Fuerza polaridad negativa si contiene léxico explícito de depresión/tristeza
-            if contiene_palabras_tristes and polarity >= 0:
+            texto_lower = text.lower()
+
+            # Conteo de palabras en español
+            conteo_pos = sum(1 for p in palabras_positivas if p in texto_lower)
+            conteo_neg = sum(1 for p in palabras_negativas if p in texto_lower)
+
+            # Ajuste de polaridad por palabras clave detectadas
+            if conteo_pos > conteo_neg and polarity <= 0:
+                polarity = 0.5
+            elif conteo_neg > conteo_pos and polarity >= 0:
                 polarity = -0.5
 
             st.divider()
@@ -96,6 +118,7 @@ if st.button("🚀 Analizar Estado Emocional", type="primary"):
 
             st.subheader("💬 Recomendación Psicopedagógica:")
 
+            # Clasificación de la respuesta
             if polarity > 0.15:
                 st.success("😊 **¡Excelente estado mental!**")
                 st.write(
