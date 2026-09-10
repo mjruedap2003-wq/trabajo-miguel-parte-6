@@ -79,7 +79,7 @@ if st.button("🚀 Analizar Estado Emocional", type="primary"):
                 st.subheader("💬 Recomendación Psicopedagógica:")
 
                 if polarity > 0.15:
-                    st.success("😊 **¡Excelente estado mental!**")
+                    st.success("😊 **¡Excelente, tienes el mejor estado mental parcero!**")
                     st.write(
                         "Tus palabras reflejan una actitud positiva, balance"
                         " emocional y un estado de ánimo óptimo. ¡Sigue"
@@ -91,7 +91,7 @@ if st.button("🚀 Analizar Estado Emocional", type="primary"):
                 elif polarity < -0.15:
                     st.error(
                         "😔 **Recomendación: Considera buscar acompañamiento"
-                        " profesional.**"
+                        " profesional broki.**"
                     )
                     st.write(
                         "Detectamos una carga de tensión, tristeza o malestar"
@@ -105,7 +105,7 @@ if st.button("🚀 Analizar Estado Emocional", type="primary"):
                     )
 
                 else:
-                    st.info("😐 **Estado Neutro / Estable**")
+                    st.info("😐 **Estado Neutro / Estable / Estás normal, parchado, relajairo**")
                     st.write(
                         "Tus palabras indican un punto de equilibrio o"
                         " neutralidad. Vas por buen camino; mantén la escucha"
