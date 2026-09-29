@@ -139,7 +139,7 @@ PALABRAS_NEGATIVAS = [
 st.markdown(
     """
     <div class="hero-container">
-        <h1>🧠 Análisis de Sentimiento</h1>
+        <h1>🧠 Análisis de Sentimientos para amigos</h1>
         <p>Procesamiento del Lenguaje Natural & Diagnóstico Emocional</p>
     </div>
     """,
