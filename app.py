@@ -2,7 +2,7 @@ import pandas as pd
 from PIL import Image
 import streamlit as st
 from textblob import TextBlob
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 
 # Configuración de la página
 st.set_page_config(
@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- ESTILOS CSS ESTILO DARK PSYCHOLOGY ---
+# --- ESTILOS CSS ESTILO DARK PSYCHOLOGY & ALTO CONTRASTE ---
 st.markdown(
     """
     <style>
@@ -25,7 +25,12 @@ st.markdown(
     /* Fondo general oscuro estilo noche profunda */
     .stApp {
         background-color: #0A0A0C;
-        color: #E2E8F0;
+        color: #FFFFFF !important;
+    }
+
+    /* Textos globales en blanco para máxima legibilidad */
+    p, span, label, .stMarkdown, div {
+        color: #FFFFFF !important;
     }
 
     /* Banner de Encabezado Psicología Oscura */
@@ -34,24 +39,24 @@ st.markdown(
         padding: 2.5rem 2rem;
         border-radius: 16px;
         text-align: center;
-        border: 1px solid #2D1B4E;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(139, 92, 246, 0.15);
+        border: 1px solid #3B206E;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(139, 92, 246, 0.25);
         margin-bottom: 2rem;
     }
     .hero-container h1 {
-        color: #F8FAFC !important;
+        color: #FFFFFF !important;
         font-size: 2.2rem;
         font-weight: 700;
         letter-spacing: -0.02em;
         margin-bottom: 0.5rem;
     }
     .hero-container p {
-        color: #94A3B8;
+        color: #E2E8F0 !important;
         font-size: 1.05rem;
         margin: 0;
     }
 
-    /* Gif/Animación de malabarismo centrado */
+    /* Gif / Animación de malabarismo */
     .gif-container {
         display: flex;
         justify-content: center;
@@ -60,8 +65,9 @@ st.markdown(
     }
     .gif-container img {
         border-radius: 12px;
-        max-width: 300px;
-        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.2);
+        max-width: 320px;
+        border: 1px solid #3B206E;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
     }
 
     /* Barra Lateral Estilizada */
@@ -69,46 +75,53 @@ st.markdown(
         background-color: #0F0F14;
         border-right: 1px solid #1E1E28;
     }
+    [data-testid="stSidebar"] * {
+        color: #FFFFFF !important;
+    }
 
     /* Tarjetas de Métricas */
     .metric-card {
         background: #13131A;
-        border: 1px solid #27273A;
+        border: 1px solid #3B206E;
         border-radius: 12px;
         padding: 1.25rem;
         text-align: center;
         margin-bottom: 1rem;
     }
     .metric-card .label {
-        color: #A0AEC0;
-        font-size: 0.85rem;
+        color: #FFFFFF !important;
+        font-size: 0.9rem;
+        font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         margin-bottom: 0.3rem;
     }
     .metric-card .value {
-        color: #8B5CF6;
-        font-size: 2rem;
+        color: #A78BFA !important;
+        font-size: 2.2rem;
         font-weight: 700;
     }
 
-    /* Ajustes visuales de Inputs y Expanders */
+    /* Inputs de Texto */
+    .stTextInput label {
+        color: #FFFFFF !important;
+        font-weight: 600;
+    }
     .stTextInput > div > div > input {
         background-color: #13131A !important;
-        color: #F8FAFC !important;
-        border: 1px solid #27273A !important;
+        color: #FFFFFF !important;
+        border: 1px solid #3B206E !important;
         border-radius: 8px !important;
     }
     .stTextInput > div > div > input:focus {
         border-color: #8B5CF6 !important;
-        box-shadow: 0 0 8px rgba(139, 92, 246, 0.4) !important;
+        box-shadow: 0 0 10px rgba(139, 92, 246, 0.5) !important;
     }
 
-    /* Modificación de alertas/mensajes */
+    /* Alertas / Cuadros de Estado */
     .stAlert {
         background-color: #13131A !important;
-        border: 1px solid #27273A !important;
-        color: #E2E8F0 !important;
+        border: 1px solid #3B206E !important;
         border-radius: 10px !important;
     }
     </style>
@@ -127,19 +140,17 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- ANIMACIÓN / GIF DE JUGGLING BALL ---
+# --- ANIMACIÓN / GIF DE MALABARISMO (JUGGLING BALL) ---
 st.markdown(
     """
     <div class="gif-container">
-        <img src="https://media.giphy.com/media/d1E2GyfFiM1A9nbe/giphy.gif" alt="Juggling animation">
+        <img src="https://media.giphy.com/media/d1E2GyfFiM1A9nbe/giphy.gif" alt="Juggling Animation">
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 st.subheader("Por favor escribe en el campo de texto la frase que deseas analizar")
-
-translator = Translator()
 
 # --- BARRA LATERAL CON INFORMACIÓN ---
 with st.sidebar:
@@ -159,17 +170,16 @@ with st.expander("🔍 Analizar texto", expanded=True):
     text = st.text_input("Escribe por favor:")
     if text:
         try:
-            translation = translator.translate(text, src="es", dest="en")
-            trans_text = translation.text
+            trans_text = GoogleTranslator(source="auto", target="en").translate(text)
         except Exception:
-            trans_text = text  # Fallback si falla el traductor
+            trans_text = text  # Fallback si falla la conexión externa
 
         blob = TextBlob(trans_text)
 
         polarity_val = round(blob.sentiment.polarity, 2)
         subjectivity_val = round(blob.sentiment.subjectivity, 2)
 
-        # Visualización elegante de métricas en 2 columnas
+        # Métricas en 2 columnas
         col1, col2 = st.columns(2)
         with col1:
             st.markdown(
@@ -199,23 +209,23 @@ with st.expander("🔍 Analizar texto", expanded=True):
             st.success("Es un sentimiento Positivo 😊")
             st.markdown(
                 """
-                > **Resumen del Diagnóstico:** Te encuentras en un estado emocional favorable o transmites optimismo. 
-                > **Recomendación:** ¡Sigue así! Mantén esa mentalidad positiva y sigue cultivando los pensamientos y actividades que te hacen sentir bien.
+                > **Resumen del Diagnóstico:** Expresas un estado emocional favorable u optimista.  
+                > **Recomendación:** ¡Sigue así! Mantén esa mentalidad y continúa cultivando actividades que refuercen tu bienestar emocional.
                 """
             )
         elif polarity_val < -0.05:
             st.error("Es un sentimiento Negativo 😔")
             st.markdown(
                 """
-                > **Resumen del Diagnóstico:** Detectamos una carga emocional negativa o de malestar en tu mensaje.
-                > **Recomendación:** Es completamente normal sentirse así a veces. Sin embargo, si estos pensamientos triste o abrumadores son recurrentes, **te recomendamos considerar la posibilidad de consultar a un psicólogo o profesional de salud mental.** Hablar con alguien capacitado puede ser de gran ayuda.
+                > **Resumen del Diagnóstico:** Se detecta una carga emocional de malestar, tristeza o frustración en tu mensaje.  
+                > **Recomendación:** Es totalmente normal atravesar momentos difíciles. Sin embargo, si estos sentimientos de tristeza o desánimo persisten en tu día a día, **se recomienda acudir a consulta con un psicólogo o profesional de salud mental** para recibir el acompañamiento adecuado.
                 """
             )
         else:
             st.info("Es un sentimiento Neutral 😐")
             st.markdown(
                 """
-                > **Resumen del Diagnóstico:** Tu estado emocional o mensaje se percibe neutro y equilibrado.
-                > **Recomendación:** Te encuentras en un estado de calma o neutralidad. Puedes continuar con tus actividades habituales manteniendo tu tranquilidad.
+                > **Resumen del Diagnóstico:** Tu estado emocional se percibe en equilibrio o de carácter descriptivo/objetivo.  
+                > **Recomendación:** Te encuentras en un punto neutro. Continúa con tus actividades manteniendo esa estabilidad.
                 """
             )
