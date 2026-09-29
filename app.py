@@ -1,8 +1,11 @@
+import json
+import os
 import pandas as pd
 from PIL import Image
 import streamlit as st
 from textblob import TextBlob
 from deep_translator import GoogleTranslator
+from streamlit_lottie import st_lottie
 
 # Configuración de la página
 st.set_page_config(
@@ -11,6 +14,13 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded",
 )
+
+# --- FUNCIÓN PARA CARGAR LA ANIMACIÓN LOTTIE (JSON) ---
+def load_lottie_file(filepath: str):
+    if os.path.exists(filepath):
+        with open(filepath, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return None
 
 # --- ESTILOS CSS ESTILO DARK PSYCHOLOGY & ALTO CONTRASTE ---
 st.markdown(
@@ -51,19 +61,6 @@ st.markdown(
         color: #E2E8F0 !important;
         font-size: 1.05rem;
         margin: 0;
-    }
-
-    .gif-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 2rem;
-    }
-    .gif-container img {
-        border-radius: 12px;
-        max-width: 320px;
-        border: 1px solid #3B206E;
-        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
     }
 
     [data-testid="stSidebar"] {
@@ -149,15 +146,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- ANIMACIÓN / GIF DE JUGGLING ---
-st.markdown(
-    """
-    <div class="gif-container">
-        <img src="https://media.giphy.com/media/d1E2GyfFiM1A9nbe/giphy.gif" alt="Juggling Animation">
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+# --- CÁRGAR Y MOSTRAR LA ANIMACIÓN LOTTIE (JSON) ---
+lottie_juggling = load_lottie_file("Juggling ball.json")
+
+if lottie_juggling:
+    st_lottie(lottie_juggling, height=220, key="juggling_anim")
 
 st.subheader("Por favor escribe en el campo de texto la frase que deseas analizar")
 
