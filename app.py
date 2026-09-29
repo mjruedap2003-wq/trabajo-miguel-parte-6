@@ -9,7 +9,7 @@ from streamlit_lottie import st_lottie
 
 # Configuración de la página
 st.set_page_config(
-    page_title="Análisis de Sentimientos BJ - NLP",
+    page_title="Análisis de Sentimientos - NLP",
     page_icon="🧠",
     layout="centered",
     initial_sidebar_state="expanded",
