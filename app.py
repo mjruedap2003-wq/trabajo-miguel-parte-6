@@ -1,8 +1,8 @@
-from PIL import Image
-from googletrans import Translator
 import pandas as pd
+from PIL import Image
 import streamlit as st
 from textblob import TextBlob
+from googletrans import Translator
 
 # Configuración de la página
 st.set_page_config(
@@ -49,6 +49,19 @@ st.markdown(
         color: #94A3B8;
         font-size: 1.05rem;
         margin: 0;
+    }
+
+    /* Gif/Animación de malabarismo centrado */
+    .gif-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .gif-container img {
+        border-radius: 12px;
+        max-width: 300px;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.2);
     }
 
     /* Barra Lateral Estilizada */
@@ -114,11 +127,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-try:
-    image = Image.open("emoticones.jpg")
-    st.image(image, use_container_width=True)
-except FileNotFoundError:
-    pass
+# --- ANIMACIÓN / GIF DE JUGGLING BALL ---
+st.markdown(
+    """
+    <div class="gif-container">
+        <img src="https://media.giphy.com/media/d1E2GyfFiM1A9nbe/giphy.gif" alt="Juggling animation">
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.subheader("Por favor escribe en el campo de texto la frase que deseas analizar")
 
@@ -141,8 +158,12 @@ with st.sidebar:
 with st.expander("🔍 Analizar texto", expanded=True):
     text = st.text_input("Escribe por favor:")
     if text:
-        translation = translator.translate(text, src="es", dest="en")
-        trans_text = translation.text
+        try:
+            translation = translator.translate(text, src="es", dest="en")
+            trans_text = translation.text
+        except Exception:
+            trans_text = text  # Fallback si falla el traductor
+
         blob = TextBlob(trans_text)
 
         polarity_val = round(blob.sentiment.polarity, 2)
@@ -173,10 +194,28 @@ with st.expander("🔍 Analizar texto", expanded=True):
 
         st.write("---")
 
-        x = polarity_val
-        if x > 0.0 and x <= 1.0:
+        # --- EVALUACIÓN DE SENTIMIENTO Y RECOMENDACIÓN PSICOLÓGICA ---
+        if polarity_val > 0.05:
             st.success("Es un sentimiento Positivo 😊")
-        elif x >= -1 and x <= 0:
+            st.markdown(
+                """
+                > **Resumen del Diagnóstico:** Te encuentras en un estado emocional favorable o transmites optimismo. 
+                > **Recomendación:** ¡Sigue así! Mantén esa mentalidad positiva y sigue cultivando los pensamientos y actividades que te hacen sentir bien.
+                """
+            )
+        elif polarity_val < -0.05:
             st.error("Es un sentimiento Negativo 😔")
+            st.markdown(
+                """
+                > **Resumen del Diagnóstico:** Detectamos una carga emocional negativa o de malestar en tu mensaje.
+                > **Recomendación:** Es completamente normal sentirse así a veces. Sin embargo, si estos pensamientos triste o abrumadores son recurrentes, **te recomendamos considerar la posibilidad de consultar a un psicólogo o profesional de salud mental.** Hablar con alguien capacitado puede ser de gran ayuda.
+                """
+            )
         else:
             st.info("Es un sentimiento Neutral 😐")
+            st.markdown(
+                """
+                > **Resumen del Diagnóstico:** Tu estado emocional o mensaje se percibe neutro y equilibrado.
+                > **Recomendación:** Te encuentras en un estado de calma o neutralidad. Puedes continuar con tus actividades habituales manteniendo tu tranquilidad.
+                """
+            )
