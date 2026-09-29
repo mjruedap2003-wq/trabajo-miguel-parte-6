@@ -22,18 +22,15 @@ st.markdown(
         font-family: 'Inter', sans-serif;
     }
 
-    /* Fondo general oscuro estilo noche profunda */
     .stApp {
         background-color: #0A0A0C;
         color: #FFFFFF !important;
     }
 
-    /* Textos globales en blanco para máxima legibilidad */
     p, span, label, .stMarkdown, div {
         color: #FFFFFF !important;
     }
 
-    /* Banner de Encabezado Psicología Oscura */
     .hero-container {
         background: linear-gradient(135deg, #111116 0%, #1A102F 50%, #0A0A0C 100%);
         padding: 2.5rem 2rem;
@@ -56,7 +53,6 @@ st.markdown(
         margin: 0;
     }
 
-    /* Gif / Animación de malabarismo */
     .gif-container {
         display: flex;
         justify-content: center;
@@ -70,7 +66,6 @@ st.markdown(
         box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
     }
 
-    /* Barra Lateral Estilizada */
     [data-testid="stSidebar"] {
         background-color: #0F0F14;
         border-right: 1px solid #1E1E28;
@@ -79,7 +74,6 @@ st.markdown(
         color: #FFFFFF !important;
     }
 
-    /* Tarjetas de Métricas */
     .metric-card {
         background: #13131A;
         border: 1px solid #3B206E;
@@ -102,7 +96,6 @@ st.markdown(
         font-weight: 700;
     }
 
-    /* Inputs de Texto */
     .stTextInput label {
         color: #FFFFFF !important;
         font-weight: 600;
@@ -118,7 +111,6 @@ st.markdown(
         box-shadow: 0 0 10px rgba(139, 92, 246, 0.5) !important;
     }
 
-    /* Alertas / Cuadros de Estado */
     .stAlert {
         background-color: #13131A !important;
         border: 1px solid #3B206E !important;
@@ -128,6 +120,23 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# --- DICCIONARIOS DE PALABRAS PREDETERMINADAS EN ESPAÑOL ---
+PALABRAS_POSITIVAS = [
+    "feliz", "contento", "entusiasmado", "alegre", "optimista", 
+    "animado", "radiante", "excelente", "genial", "bien", "encantado"
+]
+
+PALABRAS_NEUTRALES = [
+    "normal", "serio", "transparente", "regular", "indiferente", 
+    "tranquilo", "estable", "imparcial", "sin novedad", "ok"
+]
+
+PALABRAS_NEGATIVAS = [
+    "triste", "aburrido", "decaido", "decaído", "deprimido", "maricon", 
+    "maricón", "malo", "enojado", "molesto", "desanimado", "solo", 
+    "frustrado", "ansioso", "agobiado", "estresado", "rabia"
+]
 
 # --- CABECERA ---
 st.markdown(
@@ -140,7 +149,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- ANIMACIÓN / GIF DE MALABARISMO (JUGGLING BALL) ---
+# --- ANIMACIÓN / GIF DE JUGGLING ---
 st.markdown(
     """
     <div class="gif-container">
@@ -152,7 +161,7 @@ st.markdown(
 
 st.subheader("Por favor escribe en el campo de texto la frase que deseas analizar")
 
-# --- BARRA LATERAL CON INFORMACIÓN ---
+# --- BARRA LATERAL ---
 with st.sidebar:
     st.subheader("📊 Polaridad y Subjetividad")
     """
@@ -169,17 +178,42 @@ with st.sidebar:
 with st.expander("🔍 Analizar texto", expanded=True):
     text = st.text_input("Escribe por favor:")
     if text:
-        try:
-            trans_text = GoogleTranslator(source="auto", target="en").translate(text)
-        except Exception:
-            trans_text = text  # Fallback si falla la conexión externa
+        text_lower = text.lower().strip()
+        
+        # 1. DETECCIÓN POR PALABRAS CLAVE PREDETERMINADAS
+        categoria_manual = None
+        if any(palabra in text_lower for palabra in PALABRAS_POSITIVAS):
+            categoria_manual = "positiva"
+            polarity_val = 0.80
+            subjectivity_val = 0.75
+        elif any(palabra in text_lower for palabra in PALABRAS_NEGATIVAS):
+            categoria_manual = "negativa"
+            polarity_val = -0.80
+            subjectivity_val = 0.85
+        elif any(palabra in text_lower for palabra in PALABRAS_NEUTRALES):
+            categoria_manual = "neutral"
+            polarity_val = 0.00
+            subjectivity_val = 0.10
 
-        blob = TextBlob(trans_text)
+        # 2. SI NO COINCIDE CON NINGUNA PALABRA CLAVE, USA TEXTBLOB + TRADUCCIÓN
+        if not categoria_manual:
+            try:
+                trans_text = GoogleTranslator(source="auto", target="en").translate(text)
+            except Exception:
+                trans_text = text
 
-        polarity_val = round(blob.sentiment.polarity, 2)
-        subjectivity_val = round(blob.sentiment.subjectivity, 2)
+            blob = TextBlob(trans_text)
+            polarity_val = round(blob.sentiment.polarity, 2)
+            subjectivity_val = round(blob.sentiment.subjectivity, 2)
 
-        # Métricas en 2 columnas
+            if polarity_val > 0.1:
+                categoria_manual = "positiva"
+            elif polarity_val < -0.1:
+                categoria_manual = "negativa"
+            else:
+                categoria_manual = "neutral"
+
+        # MÓDULO VISUAL DE MÉTRICAS
         col1, col2 = st.columns(2)
         with col1:
             st.markdown(
@@ -204,8 +238,8 @@ with st.expander("🔍 Analizar texto", expanded=True):
 
         st.write("---")
 
-        # --- EVALUACIÓN DE SENTIMIENTO Y RECOMENDACIÓN PSICOLÓGICA ---
-        if polarity_val > 0.05:
+        # EVALUACIÓN FINAL Y RECOMENDACIÓN
+        if categoria_manual == "positiva":
             st.success("Es un sentimiento Positivo 😊")
             st.markdown(
                 """
@@ -213,7 +247,7 @@ with st.expander("🔍 Analizar texto", expanded=True):
                 > **Recomendación:** ¡Sigue así! Mantén esa mentalidad y continúa cultivando actividades que refuercen tu bienestar emocional.
                 """
             )
-        elif polarity_val < -0.05:
+        elif categoria_manual == "negativa":
             st.error("Es un sentimiento Negativo 😔")
             st.markdown(
                 """
