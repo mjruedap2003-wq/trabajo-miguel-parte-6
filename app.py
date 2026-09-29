@@ -1,154 +1,182 @@
-import json
-import os
-
-from deep_translator import GoogleTranslator
 from PIL import Image
+from googletrans import Translator
+import pandas as pd
 import streamlit as st
-from streamlit_lottie import st_lottie
 from textblob import TextBlob
 
-# Configuración de la app
+# Configuración de la página
 st.set_page_config(
-    page_title="Evaluación de Bienestar Emocional",
+    page_title="Análisis de Sentimiento - NLP",
     page_icon="🧠",
     layout="centered",
+    initial_sidebar_state="expanded",
 )
 
+# --- ESTILOS CSS ESTILO DARK PSYCHOLOGY ---
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
-def load_lottiefile(filepath: str):
-    if os.path.exists(filepath):
-        with open(filepath, "r") as f:
-            return json.load(f)
-    return None
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
 
+    /* Fondo general oscuro estilo noche profunda */
+    .stApp {
+        background-color: #0A0A0C;
+        color: #E2E8F0;
+    }
 
-st.title("🧠 Evaluación de Estado de Ánimo y Bienestar")
-st.write(
-    "Parchate y responde con sinceridad. Recuerda que **no hay respuestas"
-    " buenas ni malas**."
+    /* Banner de Encabezado Psicología Oscura */
+    .hero-container {
+        background: linear-gradient(135deg, #111116 0%, #1A102F 50%, #0A0A0C 100%);
+        padding: 2.5rem 2rem;
+        border-radius: 16px;
+        text-align: center;
+        border: 1px solid #2D1B4E;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(139, 92, 246, 0.15);
+        margin-bottom: 2rem;
+    }
+    .hero-container h1 {
+        color: #F8FAFC !important;
+        font-size: 2.2rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+    }
+    .hero-container p {
+        color: #94A3B8;
+        font-size: 1.05rem;
+        margin: 0;
+    }
+
+    /* Barra Lateral Estilizada */
+    [data-testid="stSidebar"] {
+        background-color: #0F0F14;
+        border-right: 1px solid #1E1E28;
+    }
+
+    /* Tarjetas de Métricas */
+    .metric-card {
+        background: #13131A;
+        border: 1px solid #27273A;
+        border-radius: 12px;
+        padding: 1.25rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .metric-card .label {
+        color: #A0AEC0;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.3rem;
+    }
+    .metric-card .value {
+        color: #8B5CF6;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    /* Ajustes visuales de Inputs y Expanders */
+    .stTextInput > div > div > input {
+        background-color: #13131A !important;
+        color: #F8FAFC !important;
+        border: 1px solid #27273A !important;
+        border-radius: 8px !important;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #8B5CF6 !important;
+        box-shadow: 0 0 8px rgba(139, 92, 246, 0.4) !important;
+    }
+
+    /* Modificación de alertas/mensajes */
+    .stAlert {
+        background-color: #13131A !important;
+        border: 1px solid #27273A !important;
+        color: #E2E8F0 !important;
+        border-radius: 10px !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
-lottie_anim = load_lottiefile("Juggling ball.json")
-if lottie_anim:
-    st_lottie(lottie_anim, height=250, key="juggling")
-
-st.divider()
-
-st.subheader("📋 Campo de Expresión Emocional")
-st.write("Escribe cómo te has sentido en estos últimos días o describe tu día a día:")
-
-text = st.text_area(
-    "Escribe tu respuesta aquí:",
-    placeholder="Ejemplo: Hoy me siento muy contento, alegre y satisfecho con mis logros...",
-    height=120,
+# --- CABECERA ---
+st.markdown(
+    """
+    <div class="hero-container">
+        <h1>🧠 Análisis de Sentimiento</h1>
+        <p>Procesamiento del Lenguaje Natural & Diagnóstico Emocional</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
+try:
+    image = Image.open("emoticones.jpg")
+    st.image(image, use_container_width=True)
+except FileNotFoundError:
+    pass
 
-def traducir_texto(texto_original):
-    try:
-        return GoogleTranslator(source="auto", target="en").translate(texto_original)
-    except Exception:
-        return texto_original
+st.subheader("Por favor escribe en el campo de texto la frase que deseas analizar")
 
+translator = Translator()
 
-if st.button("🚀 Analizar Estado Emocional", type="primary"):
-    if not text.strip():
-        st.warning("Por favor escribe una frase o texto para analizar.")
-    else:
-        with st.spinner("Analizando respuesta..."):
-            # 1. Traducir el texto al inglés para TextBlob
-            texto_traducido = traducir_texto(text)
+# --- BARRA LATERAL CON INFORMACIÓN ---
+with st.sidebar:
+    st.subheader("📊 Polaridad y Subjetividad")
+    """
+    **Polaridad:** Indica si el sentimiento expresado en el texto es positivo, negativo o neutral. 
+    Su valor oscila entre **-1** (muy negativo) y **1** (muy positivo), con **0** representando un sentimiento neutral.
 
-            # 2. Análisis de sentimiento mediante TextBlob
-            blob = TextBlob(texto_traducido)
-            polarity = round(blob.sentiment.polarity, 2)
-            subjectivity = round(blob.sentiment.subjectivity, 2)
+    ---
+    
+    **Subjetividad:** Mide cuánto del contenido es subjetivo (opiniones, emociones, creencias) frente a objetivo
+    (hechos). Va de **0** a **1**, donde **0** es completamente objetivo y **1** es completamente subjetivo.
+    """
 
-            # 3. Diccionarios de palabras clave en español (Respaldo directo)
-            palabras_positivas = [
-                "feliz",
-                "contento",
-                "alegre",
-                "bien",
-                "excelente",
-                "genial",
-                "emocionado",
-                "satisfecho",
-                "tranquilo",
-                "paz",
-                "optimista",
-                "afortunado",
-                "motivado",
-            ]
+# --- SECCIÓN DE ANÁLISIS ---
+with st.expander("🔍 Analizar texto", expanded=True):
+    text = st.text_input("Escribe por favor:")
+    if text:
+        translation = translator.translate(text, src="es", dest="en")
+        trans_text = translation.text
+        blob = TextBlob(trans_text)
 
-            palabras_negativas = [
-                "deprimido",
-                "deprimida",
-                "triste",
-                "ayuda",
-                "llorar",
-                "mal",
-                "solo",
-                "sola",
-                "horrible",
-                "ansioso",
-                "preocupado",
-                "agotado",
-                "desesperado",
-            ]
+        polarity_val = round(blob.sentiment.polarity, 2)
+        subjectivity_val = round(blob.sentiment.subjectivity, 2)
 
-            texto_lower = text.lower()
+        # Visualización elegante de métricas en 2 columnas
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(
+                f"""
+                <div class="metric-card">
+                    <div class="label">Polaridad</div>
+                    <div class="value">{polarity_val}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with col2:
+            st.markdown(
+                f"""
+                <div class="metric-card">
+                    <div class="label">Subjetividad</div>
+                    <div class="value">{subjectivity_val}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-            # Conteo de palabras en español
-            conteo_pos = sum(1 for p in palabras_positivas if p in texto_lower)
-            conteo_neg = sum(1 for p in palabras_negativas if p in texto_lower)
+        st.write("---")
 
-            # Ajuste de polaridad por palabras clave detectadas
-            if conteo_pos > conteo_neg and polarity <= 0:
-                polarity = 0.5
-            elif conteo_neg > conteo_pos and polarity >= 0:
-                polarity = -0.5
-
-            st.divider()
-            st.subheader("📊 Resultados de la Evaluación")
-
-            col1, col2 = st.columns(2)
-            col1.metric(label="Nivel de Polaridad", value=polarity)
-            col2.metric(label="Subjetividad", value=subjectivity)
-
-            st.subheader("💬 Recomendación Psicopedagógica:")
-
-            # Clasificación de la respuesta
-            if polarity > 0.15:
-                st.success("😊 **¡Excelente estado mental!**")
-                st.write(
-                    "Tus palabras reflejan una actitud positiva, balance"
-                    " emocional y un estado de ánimo óptimo. ¡Sigue cultivando"
-                    " esos hábitos saludables que te hacen bien!"
-                )
-                st.balloons()
-
-            elif polarity < -0.10:
-                st.error(
-                    "😔 **Recomendación: Considera buscar acompañamiento"
-                    " profesional.**"
-                )
-                st.write(
-                    "Detectamos una carga de tensión, tristeza o malestar"
-                    " emocional en lo que escribiste. **Ir al psicólogo o hablar"
-                    " con un profesional de la salud mental** es un paso valioso"
-                    " para cuidar de ti."
-                )
-                st.warning(
-                    "📍 *Recuerda: Pedir ayuda no es síntoma de debilidad, sino"
-                    " un acto de valentía y autocuidado.*"
-                )
-
-            else:
-                st.info("😐 **Estado Neutro / Estable**")
-                st.write(
-                    "Tus palabras indican un punto de equilibrio o"
-                    " neutralidad. Vas por buen camino; mantén la escucha de"
-                    " tus emociones y procura realizar actividades que te"
-                    " generen bienestar."
-                )
+        x = polarity_val
+        if x > 0.0 and x <= 1.0:
+            st.success("Es un sentimiento Positivo 😊")
+        elif x >= -1 and x <= 0:
+            st.error("Es un sentimiento Negativo 😔")
+        else:
+            st.info("Es un sentimiento Neutral 😐")
